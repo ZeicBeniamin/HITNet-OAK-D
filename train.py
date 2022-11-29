@@ -34,11 +34,18 @@ class TrainModel(pl.LightningModule):
         self.val_metric = metric.clone(prefix="val_")
 
     def forward(self, batch):
+        print("METHOD: forward")
+        torch.cuda.empty_cache()
+
+        # Image normalization? :)
         left = batch["left"] * 2 - 1
         right = batch["right"] * 2 - 1
         return self.model(left, right)
 
     def training_step(self, batch, batch_idx):
+        print("METHOD: training_step")
+        torch.cuda.empty_cache()
+
         scheduler = self.lr_schedulers()
         optimizer = self.optimizers()
 
@@ -60,6 +67,7 @@ class TrainModel(pl.LightningModule):
         self.log_dict(loss_dict, on_step=True)
 
     def training_epoch_end(self, outputs):
+        print("METHOD: training_epoch_end")
         self.log_dict(self.train_metric.compute(), prog_bar=False)
         self.train_metric.reset()
 
@@ -122,7 +130,7 @@ class TrainModel(pl.LightningModule):
         dataset = build_dataset(self.hparams, training=True)
         return torch.utils.data.DataLoader(
             dataset,
-            batch_size=self.hparams.batch_size // self.trainer.num_gpus,
+            batch_size=self.hparams.batch_size // self.trainer.num_devices,
             num_workers=self.hparams.num_workers,
             shuffle=True,
             pin_memory=True,
@@ -133,7 +141,7 @@ class TrainModel(pl.LightningModule):
         dataset = build_dataset(self.hparams, training=False)
         return torch.utils.data.DataLoader(
             dataset,
-            batch_size=self.hparams.batch_size_val // self.trainer.num_gpus,
+            batch_size=self.hparams.batch_size_val // self.trainer.num_devices,
             num_workers=self.hparams.num_workers_val,
             pin_memory=True,
         )

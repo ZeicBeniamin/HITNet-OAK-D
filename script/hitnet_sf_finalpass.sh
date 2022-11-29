@@ -4,7 +4,7 @@ python3 train.py \
 --model HITNet_SF \
 --gpus -1 \
 --max_steps 2000000 \
---accelerator ddp \
+--accelerator cuda \
 --max_disp 320 \
 --max_disp_val 192 \
 --optmizer Adam \
@@ -17,7 +17,7 @@ python3 train.py \
 --num_workers_val 2 \
 --data_augmentation 0 \
 --data_type_train SceneFlow \
---data_root_train /home/tiger/SceneFlow \
+--data_root_train /home/bz/SceneFlow \
 --data_list_train lists/sceneflow_train_fly3d_only.list \
 --data_size_train 960 320 \
 --data_type_val SceneFlow \

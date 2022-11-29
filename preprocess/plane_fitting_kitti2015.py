@@ -6,6 +6,8 @@ import HitnetModule
 from pathlib import Path
 import multiprocessing as mp
 
+import sys
+sys.path.append("/home/bz/Documents/SpatialAI/TinyHITNet/")
 from dataset.utils import np2torch
 
 
@@ -50,9 +52,14 @@ def main(root, list_path):
         file_list = [Path(line.strip()) for line in fp]
 
     lock_list = [mp.Lock() for _ in range(8)]
-    with mp.Pool(8, process_init, [lock_list, root]) as pool:
-        list(tqdm.tqdm(pool.imap_unordered(process, file_list), total=len(file_list)))
+    process_init(lock_list, root)
+    # with mp.Pool(8, process_init, [lock_list, root]) as pool:
+    #     list(tqdm.tqdm(pool.imap_unordered(process, file_list), total=len(file_list)))
+    for i in range(len(file_list)):
+        process(file_list[i])
+        torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":
-    main("/home/tiger/KITTIStereo/KITTI2015/training", "lists/kitti2015_train.list")
+    main("/home/bz/Documents/SpatialAI/kitti_2015/training",
+    "lists/kitti2015_train.list")

@@ -208,6 +208,7 @@ class LevalProp(nn.Module):
         self.h_size = h_size
 
     def forward(self, hyps, l, r):
+        torch.cuda.empty_cache()
         cost = [warp_and_aggregate(h, l, r) for h in hyps]
         cost = torch.cat(cost, dim=1)
         x = self.conv_neighbors(cost)
@@ -255,6 +256,7 @@ class LevelInit(nn.Module):
         )
 
     def forward(self, l, r, ref=None):
+# Intre iesirea de aici si intrarea in LEvalProp se intampla un spike de utilizare de memorie
         lt = F.conv2d(
             l,
             self.conv_reduce.weight,
@@ -361,6 +363,8 @@ class HITNet_KITTI(nn.Module):
 
 
     def forward(self, left_img, right_img):
+        torch.cuda.empty_cache()
+
         n, c, h, w = left_img.size()
         w_pad = (self.align - (w % self.align)) % self.align
         h_pad = (self.align - (h % self.align)) % self.align
@@ -372,14 +376,20 @@ class HITNet_KITTI(nn.Module):
         rf = self.feature_extractor(right_img)
 
         h0, cv0, di0, wp0 = self.level[0](lf[-1], rf[-1])
+        torch.cuda.empty_cache()
         h1, cv1, di1, wp1 = self.level[1](lf[-2], rf[-2], hyp_up(h0, 2, 1))
+        torch.cuda.empty_cache()
         h2, cv2, di2, wp2 = self.level[2](lf[-3], rf[-3], hyp_up(h1, 2, 1), lf[-1])
+        torch.cuda.empty_cache()
         h3, cv3, di3, wp3 = self.level[3](lf[-4], rf[-4], hyp_up(h2, 2, 1), lf[-2])
+        torch.cuda.empty_cache()
         h4, cv4, di4, wp4 = self.level[4](lf[-5], rf[-5], hyp_up(h3, 2, 1), lf[-3])
 
         h5 = self.refine[0](h4, lf[-3])
         h6 = self.refine[1](hyp_up(h5, 1, 2), lf[-4])
         h7 = self.refine[2](hyp_up(h6, 1, 2), lf[-5])[:, :, :h, :w]
+
+        print("METHOD: Reached end of HITNet_KITTI.forward()")
 
         return {
             "tile_size": 4,

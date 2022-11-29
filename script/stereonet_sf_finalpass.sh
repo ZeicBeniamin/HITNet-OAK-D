@@ -5,7 +5,7 @@ python3 train.py \
 --sync_batchnorm True \
 --gpus -1 \
 --max_steps 2000000 \
---accelerator ddp \
+--accelerator cuda \
 --max_disp 192 \
 --optmizer RMS \
 --lr 1e-3 \
