@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
 import pytorch_lightning as pl
+import time
 
 from colormap import apply_colormap, dxy_colormap
 
@@ -21,6 +22,7 @@ class LogColorDepthMapCallback(pl.Callback):
         batch,
         batch_idx: int,
     ) -> None:
+        trainer.save_checkpoint(f"/home/bz/hitnet_out/{time.strftime('%Y_%m_%d-%H_%M_%S')}.ckpt")
         if trainer.global_step % self.step != 0 or not trainer.is_global_zero:
             return
 

@@ -176,4 +176,5 @@ if __name__ == "__main__":
             LogColorDepthMapCallback(),
         ],
     )
+
     trainer.fit(model)

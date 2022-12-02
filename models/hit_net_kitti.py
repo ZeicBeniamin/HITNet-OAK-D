@@ -8,9 +8,10 @@ import math
 def same_padding_conv(x, w, b, s):
     out_h = math.ceil(x.size(2) / s[0])
     out_w = math.ceil(x.size(3) / s[1])
+    
+    pad_h = int(max((out_h - 1) * s[0] + w.size(2) - x.size(2), 0))
+    pad_w = int(max((out_w - 1) * s[1] + w.size(3) - x.size(3), 0))
 
-    pad_h = max((out_h - 1) * s[0] + w.size(2) - x.size(2), 0)
-    pad_w = max((out_w - 1) * s[1] + w.size(3) - x.size(3), 0)
     pad_top = pad_h // 2
     pad_bottom = pad_h - pad_top
     pad_left = pad_w // 2
@@ -155,13 +156,13 @@ def warp_and_aggregate(hyp, left, right):
     cost = [torch.sum(torch.abs(left), dim=1, keepdim=True)]
     for offset in [1, 0, -1]:
         index_float = d_range + offset
-        index_long = torch.floor(index_float).long()
+        index_long = torch.floor(index_float).to(dtype=torch.int16)
         index_left = torch.clip(index_long, min=0, max=right.size(3) - 1)
         index_right = torch.clip(index_long + 1, min=0, max=right.size(3) - 1)
         index_weight = index_float - index_left
 
-        right_warp_left = torch.gather(right, dim=-1, index=index_left.long())
-        right_warp_right = torch.gather(right, dim=-1, index=index_right.long())
+        right_warp_left = torch.gather(right, dim=index_left.dim()-1, index=index_left.to(dtype=torch.int64))
+        right_warp_right = torch.gather(right, dim=index_right.dim()-1, index=index_right.to(dtype=torch.int64))
         right_warp = right_warp_left + index_weight * (
             right_warp_right - right_warp_left
         )
@@ -224,17 +225,18 @@ class LevalProp(nn.Module):
 
 
 def make_cost_volume_v2(left, right, max_disp):
-    d_range = torch.arange(max_disp, device=left.device)
+    d_range = torch.arange(max_disp, device=left.device, dtype=torch.int16)
     d_range = d_range.view(1, 1, -1, 1, 1)
 
-    x_index = torch.arange(left.size(3), device=left.device)
+    x_index = torch.arange(left.size(3), device=left.device, dtype=torch.int16)
     x_index = x_index.view(1, 1, 1, 1, -1)
 
     x_index = torch.clip(4 * x_index + 1 - d_range, 0, right.size(3) - 1).repeat(
         right.size(0), right.size(1), 1, right.size(2), 1
     )
+
     right = torch.gather(
-        right.unsqueeze(2).repeat(1, 1, max_disp, 1, 1), dim=-1, index=x_index
+        right.unsqueeze(2).repeat(1, 1, max_disp, 1, 1), dim=x_index.dim()-1, index=x_index.to(dtype=torch.int64)
     )
 
     return left.unsqueeze(2) - right
@@ -392,31 +394,31 @@ class HITNet_KITTI(nn.Module):
         print("METHOD: Reached end of HITNet_KITTI.forward()")
 
         return {
-            "tile_size": 4,
+            # "tile_size": 4,
             "disp": h7[:, 0:1],
-            "multi_scale": [
-                h0[:, 0:1],
-                h1[:, 0:1],
-                h2[:, 0:1],
-                h3[:, 0:1],
-                h4[:, 0:1],
-                h5[:, 0:1],
-                h6[:, 0:1],
-                h7[:, 0:1],
-            ],
-            "cost_volume": [cv0, cv1, cv2, cv3, cv4],
-            "slant": [
-                [h0[:, 0:1], h0[:, 1:3]],
-                [h1[:, 0:1], h1[:, 1:3]],
-                [h2[:, 0:1], h2[:, 1:3]],
-                [h3[:, 0:1], h3[:, 1:3]],
-                [h4[:, 0:1], h4[:, 1:3]],
-                [h5[:, 0:1], h5[:, 1:3]],
-                [h6[:, 0:1], h6[:, 1:3]],
-                [h7[:, 0:1], h7[:, 1:3]],
-            ],
-            "init_disp": [di0, di1, di2, di3, di4],
-            "select": [wp1, wp2, wp3, wp4],
+            # "multi_scale": [
+            #     h0[:, 0:1],
+            #     h1[:, 0:1],
+            #     h2[:, 0:1],
+            #     h3[:, 0:1],
+            #     h4[:, 0:1],
+            #     h5[:, 0:1],
+            #     h6[:, 0:1],
+            #     h7[:, 0:1],
+            # ],
+            # "cost_volume": [cv0, cv1, cv2, cv3, cv4],
+            # "slant": [
+            #     [h0[:, 0:1], h0[:, 1:3]],
+            #     [h1[:, 0:1], h1[:, 1:3]],
+            #     [h2[:, 0:1], h2[:, 1:3]],
+            #     [h3[:, 0:1], h3[:, 1:3]],
+            #     [h4[:, 0:1], h4[:, 1:3]],
+            #     [h5[:, 0:1], h5[:, 1:3]],
+            #     [h6[:, 0:1], h6[:, 1:3]],
+            #     [h7[:, 0:1], h7[:, 1:3]],
+            # ],
+            # "init_disp": [di0, di1, di2, di3, di4],
+            # "select": [wp1, wp2, wp3, wp4],
         }
 
 
