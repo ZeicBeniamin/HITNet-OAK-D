@@ -156,7 +156,7 @@ def warp_and_aggregate(hyp, left, right):
     cost = [torch.sum(torch.abs(left), dim=1, keepdim=True)]
     for offset in [1, 0, -1]:
         index_float = d_range + offset
-        index_long = torch.floor(index_float).to(dtype=torch.int16)
+        index_long = torch.floor(index_float).to(dtype=torch.float)
         index_left = torch.clip(index_long, min=0, max=right.size(3) - 1)
         index_right = torch.clip(index_long + 1, min=0, max=right.size(3) - 1)
         index_weight = index_float - index_left
@@ -225,10 +225,10 @@ class LevalProp(nn.Module):
 
 
 def make_cost_volume_v2(left, right, max_disp):
-    d_range = torch.arange(max_disp, device=left.device, dtype=torch.int16)
+    d_range = torch.arange(max_disp, device=left.device, dtype=torch.float)
     d_range = d_range.view(1, 1, -1, 1, 1)
 
-    x_index = torch.arange(left.size(3), device=left.device, dtype=torch.int16)
+    x_index = torch.arange(left.size(3), device=left.device, dtype=torch.float)
     x_index = x_index.view(1, 1, 1, 1, -1)
 
     x_index = torch.clip(4 * x_index + 1 - d_range, 0, right.size(3) - 1).repeat(

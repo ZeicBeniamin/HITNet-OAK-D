@@ -43,9 +43,9 @@ def predict(model, lp, rp, width, op):
     disp = apply_colormap(disp)
 
     output = [left, disp]
-    if "slant" in pred:
-        dxy = dxy_colormap(pred["slant"][-1][1])
-        output.append(dxy)
+    # if "slant" in pred:
+    #     dxy = dxy_colormap(pred["slant"][-1][1])
+    #     output.append(dxy)
 
     output = torch.cat(output, dim=0)
     torchvision.utils.save_image(output, op, nrow=1)
