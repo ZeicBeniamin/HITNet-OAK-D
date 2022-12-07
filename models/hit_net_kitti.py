@@ -394,31 +394,35 @@ class HITNet_KITTI(nn.Module):
         print("METHOD: Reached end of HITNet_KITTI.forward()")
 
         return {
-            # "tile_size": 4,
             "disp": h7[:, 0:1],
-            # "multi_scale": [
-            #     h0[:, 0:1],
-            #     h1[:, 0:1],
-            #     h2[:, 0:1],
-            #     h3[:, 0:1],
-            #     h4[:, 0:1],
-            #     h5[:, 0:1],
-            #     h6[:, 0:1],
-            #     h7[:, 0:1],
-            # ],
-            # "cost_volume": [cv0, cv1, cv2, cv3, cv4],
-            # "slant": [
-            #     [h0[:, 0:1], h0[:, 1:3]],
-            #     [h1[:, 0:1], h1[:, 1:3]],
-            #     [h2[:, 0:1], h2[:, 1:3]],
-            #     [h3[:, 0:1], h3[:, 1:3]],
-            #     [h4[:, 0:1], h4[:, 1:3]],
-            #     [h5[:, 0:1], h5[:, 1:3]],
-            #     [h6[:, 0:1], h6[:, 1:3]],
-            #     [h7[:, 0:1], h7[:, 1:3]],
-            # ],
-            # "init_disp": [di0, di1, di2, di3, di4],
-            # "select": [wp1, wp2, wp3, wp4],
+        }
+
+        return {
+            "tile_size": 4,
+            "disp": h7[:, 0:1],
+            "multi_scale": [
+                h0[:, 0:1],
+                h1[:, 0:1],
+                h2[:, 0:1],
+                h3[:, 0:1],
+                h4[:, 0:1],
+                h5[:, 0:1],
+                h6[:, 0:1],
+                h7[:, 0:1],
+            ],
+            "cost_volume": [cv0, cv1, cv2, cv3, cv4],
+            "slant": [
+                [h0[:, 0:1], h0[:, 1:3]],
+                [h1[:, 0:1], h1[:, 1:3]],
+                [h2[:, 0:1], h2[:, 1:3]],
+                [h3[:, 0:1], h3[:, 1:3]],
+                [h4[:, 0:1], h4[:, 1:3]],
+                [h5[:, 0:1], h5[:, 1:3]],
+                [h6[:, 0:1], h6[:, 1:3]],
+                [h7[:, 0:1], h7[:, 1:3]],
+            ],
+            "init_disp": [di0, di1, di2, di3, di4],
+            "select": [wp1, wp2, wp3, wp4],
         }
 
 
@@ -426,8 +430,8 @@ if __name__ == "__main__":
     import cv2
     from thop import profile
 
-    left = torch.rand(1, 3, 375, 1242)
-    right = torch.rand(1, 3, 375, 1242)
+    left = torch.rand(1, 3, 400, 640)
+    right = torch.rand(1, 3, 400, 640)
     model = HITNet_KITTI()
 
     print(model(left, right)["disp"].size())

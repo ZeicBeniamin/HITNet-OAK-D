@@ -35,8 +35,8 @@ def predict(model, lp, rp, width, op):
             (width, height),
             interpolation=cv2.INTER_CUBIC,
         )
-    left = np2torch(left, bgr=True).cuda().unsqueeze(0)
-    right = np2torch(right, bgr=True).cuda().unsqueeze(0)
+    left = np2torch(left, bgr=True).unsqueeze(0)
+    right = np2torch(right, bgr=True).unsqueeze(0)
     pred = model(left, right)
 
     disp = pred["disp"]
@@ -74,7 +74,7 @@ def export(model :pl.LightningModule, lp, rp, width, op):
     left = np2torch(left, bgr=True).cpu().unsqueeze(0)
     right = np2torch(right, bgr=True).cpu().unsqueeze(0)
 
-    output_name = "disparity_only_output"
+    output_name = "oak_sized_model"
 
     torch.onnx.export(
         model,
