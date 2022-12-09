@@ -55,8 +55,10 @@ class UpsampleBlock(nn.Module):
 
 
 class FeatureExtractor(nn.Module):
+    # UNET feature extractor 
     def __init__(self, C):
         super().__init__()
+        # Define the 4 downsampling operations
         self.down_0 = nn.Sequential(
             nn.Conv2d(3, C[0], 3, 1, 1),
             nn.LeakyReLU(0.2),
@@ -95,6 +97,7 @@ class FeatureExtractor(nn.Module):
         self.up_0 = UpsampleBlock(C[1], C[0])
 
     def forward(self, input):
+        # Apply downsampling, then upsampling with skip connections.
         x0 = self.down_0(input)
         x1 = self.down_1(x0)
         x2 = self.down_2(x1)
@@ -212,6 +215,7 @@ def make_cost_volume_v2(left, right, max_disp):
 
 
 class InitDispNet(nn.Module):
+    # Initialization
     def __init__(self, cin, cout, cf=None):
         super().__init__()
         self.conv_em = nn.Conv2d(cin, cout, 4)

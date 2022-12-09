@@ -73,6 +73,6 @@ print("left.shape", left.shape)
 output = [left, disp]
 
 output = torch.cat(output, dim=0)
-torchvision.utils.save_image(output, "disparity.png", nrow=1)
+torchvision.utils.save_image(output, "disparity_cpu.png", nrow=1)
 
 print(output_buffer.shape)

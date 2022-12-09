@@ -19,11 +19,11 @@ class PredictModel(pl.LightningModule):
         return self.model(left, right)
 
 @torch.no_grad()
-def export(model :pl.LightningModule, width):
-    left = torch.rand(1, 3, 100, 180)
-    right = torch.rand(1, 3, 100, 180)
+def export(model :pl.LightningModule, width, args):
+    left = torch.rand(1, 3, args.height, args.width)
+    right = torch.rand(1, 3, args.height, args.width)
 
-    output_name = "HITNet_SF_oak_sized_model"
+    output_name = args.model_name
 
     torch.onnx.export(
         model,
@@ -61,8 +61,10 @@ if __name__ == "__main__":
     parser.add_argument("--images", nargs=2, required=False)
     parser.add_argument("--model", type=str, default="HITNet")
     parser.add_argument("--ckpt", required=True)
-    parser.add_argument("--width", type=int, default=None)
+    parser.add_argument("--width", type=int, default=180, required=False)
+    parser.add_argument("--height", type=int, default=100, required=False)
     parser.add_argument("--output", default="./")
+    parser.add_argument("--model_name", default="HitNET_generic")
     args = parser.parse_args()
 
     model = PredictModel(**vars(args)).eval()
@@ -73,5 +75,5 @@ if __name__ == "__main__":
         model.model.load_state_dict(ckpt)
     model.cpu()
 
-    export(model, args.width)
+    export(model, args.width, args)
 
