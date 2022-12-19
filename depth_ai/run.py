@@ -13,7 +13,7 @@ fps = 10
 
 # bbBlobPath = "/home/bz/hitnet_out/onnxs/HITNet_SF_oak_sized_model_simp.blob"
 # bbBlobPath = "/home/bz/hitnet_out/onnxs/HITNet_SF_oak_sized_model.blob"
-bbBlobPath = "/home/bz/hitnet_out/onnxs/HITNet_SF_Gray_concat.blob"
+bbBlobPath = "./blobs/HITNet_SF_Gray_concat.blob"
 
 pipeline = dai.Pipeline()
 
