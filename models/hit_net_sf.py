@@ -358,6 +358,11 @@ class HITNet_SF_Gray(nn.Module):
         left_img = torch.cat((left_img, left_img, left_img))
         right_img = torch.cat((right_img, right_img, right_img))
 
+        left_img = left_img.unsqueeze(0)
+        right_img = right_img.unsqueeze(0)
+
+        print(left_img.size())
+
         n, c, h, w = left_img.size()
 
         w_pad = (self.align - (w % self.align)) % self.align

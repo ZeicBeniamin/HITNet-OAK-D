@@ -20,8 +20,8 @@ class PredictModel(pl.LightningModule):
 
 @torch.no_grad()
 def export(model :pl.LightningModule, width, args):
-    left = torch.rand(1, 3, args.height, args.width)
-    right = torch.rand(1, 3, args.height, args.width)
+    left = torch.rand(1, 1, args.height, args.width)
+    right = torch.rand(1, 1, args.height, args.width)
 
     output_name = args.model_name
 
