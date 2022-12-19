@@ -333,6 +333,70 @@ class RefinementNet(nn.Module):
         return hpy + x
 
 
+class HITNet_SF_Gray(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.align = 4
+        self.max_disp = 320
+
+        num_feature = [16, 16, 24, 24, 32]
+        res_dilations = [1, 1]
+
+        self.feature_extractor = FeatureExtractor(num_feature)
+        self.init_layer_0 = InitDispNet(num_feature[0], 16, num_feature[2])
+        self.prop_layer_0 = PropagationNet(res_dilations)
+
+        res_dilations = [1, 2, 4, 8, 1, 1]
+        self.refine_l0 = RefinementNet(num_feature[2], 32, res_dilations)
+        self.refine_l1 = RefinementNet(num_feature[1], 32, res_dilations)
+        self.refine_l2 = RefinementNet(num_feature[0], 16, res_dilations)
+
+    def forward(self, left_img, right_img):
+        left_img = torch.mean(left_img, dim=1)
+        right_img = torch.mean(right_img, dim=1)
+
+        left_img = torch.cat((left_img, left_img, left_img))
+        right_img = torch.cat((right_img, right_img, right_img))
+
+        n, c, h, w = left_img.size()
+
+        w_pad = (self.align - (w % self.align)) % self.align
+        h_pad = (self.align - (h % self.align)) % self.align
+
+        left_img = F.pad(left_img, (0, w_pad, 0, h_pad))
+        right_img = F.pad(right_img, (0, w_pad, 0, h_pad))
+
+        lf = self.feature_extractor(left_img)
+        rf = self.feature_extractor(right_img)
+
+        hi_0, cv_0 = self.init_layer_0(lf[0], rf[0], self.max_disp, lf[2])
+        h_0 = self.prop_layer_0([hi_0], lf[0], rf[0])
+        h_1 = self.refine_l0(h_0, lf[2])
+        h_2 = self.refine_l1(hyp_up(h_1, 1, 2), lf[1])
+        h_3 = self.refine_l2(hyp_up(h_2, 1, 2), lf[0])[:, :, :h, :w]
+
+        return {
+            "disp": h_3[:, 0:1]
+        }
+        return {
+            "tile_size": 4,
+            "disp": h_3[:, 0:1],
+            "multi_scale": [
+                h_0[:, 0:1],
+                h_1[:, 0:1],
+                h_2[:, 0:1],
+                h_3[:, 0:1],
+            ],
+            "cost_volume": [cv_0],
+            "slant": [
+                [h_0[:, 0:1], h_0[:, 1:3]],
+                [h_1[:, 0:1], h_1[:, 1:3]],
+                [h_2[:, 0:1], h_2[:, 1:3]],
+                [h_3[:, 0:1], h_3[:, 1:3]],
+            ],
+            "init_disp": [hi_0[:, 0:1]],
+        }
+
 class HITNet_SF(nn.Module):
     def __init__(self):
         super().__init__()
@@ -453,7 +517,7 @@ if __name__ == "__main__":
     left = torch.rand(1, 3, 400, 640)
     right = torch.rand(1, 3, 400, 640)
     # model = HITNetXL_SF()
-    model = HITNet_SF()
+    model = HITNet_SF_Gray()
 
     print(model(left, right)["disp"].size())
 

@@ -6,7 +6,10 @@ import time
 height = 100
 width = 180
 
-bbBlobPath = "/home/bz/hitnet_out/onnxs/simple_model/HITNet_SF_oak_sized_model_simp.blob"
+input_height = 300
+input_width = 180
+
+bbBlobPath = "/home/bz/hitnet_out/onnxs/HITNet_SF_oak_sized_model_simp.blob"
 # bbBlobPath = "/home/bz/hitnet_out/onnxs/HITNet_SF_oak_sized_model.blob"
 
 pipeline = dai.Pipeline()
@@ -17,7 +20,7 @@ camLeft.setResolution(dai.MonoCameraProperties.SensorResolution.THE_400_P)
 
 leftManip = pipeline.create(dai.node.ImageManip)
 leftManip.setNumFramesPool(4)
-leftManip.initialConfig.setResize(height, width)
+leftManip.initialConfig.setResize(input_height, input_width)
 camLeft.out.link(leftManip.inputImage)
 
 camRight = pipeline.create(dai.node.MonoCamera)
@@ -26,7 +29,7 @@ camRight.setResolution(dai.MonoCameraProperties.SensorResolution.THE_400_P)
 
 rightManip = pipeline.create(dai.node.ImageManip)
 rightManip.setNumFramesPool(4)
-rightManip.initialConfig.setResize(height, width)
+rightManip.initialConfig.setResize(input_height, input_width)
 camRight.out.link(rightManip.inputImage)
 
 cam = pipeline.create(dai.node.ColorCamera)
@@ -36,12 +39,15 @@ nn.setBlobPath(bbBlobPath)
 nn.setNumInferenceThreads(1)
 
 leftManip.out.link(nn.inputs['left'])
-leftManip.out.link(nn.inputs['right'])
+rightManip.out.link(nn.inputs['right'])
 
 # Send NN out to the host via XLink
 nnXout = pipeline.create(dai.node.XLinkOut)
+leftOut = pipeline.create(dai.node.XLinkOut)
 nnXout.setStreamName("nn")
+leftOut.setStreamName("left")
 nn.out.link(nnXout.input)
+rightManip.out.link(leftOut.input)
 
 with dai.Device(pipeline) as device:
   device.setLogLevel(dai.LogLevel.DEBUG)
@@ -51,18 +57,24 @@ with dai.Device(pipeline) as device:
   counter = 0
   while True:
     qNn = device.getOutputQueue("nn")
+    qLeft = device.getOutputQueue("left")
 
     nnData = qNn.get() # Blocking
+    leftData = qLeft.get()
 
     # NN can output from multiple layers. Print all layer names:
     # print(nnData.getAllLayerNames())
 
     # Get layer named "4078" as FP16
     layer1Data = nnData.getLayerFp16("1614")
+    leftImage = leftData.getCvFrame()
     # layer1Data = nnData.getLayerFp16("1614")
 
     if layer1Data:
       depth_map = np.reshape(np.array(layer1Data) - min(layer1Data), (height, width))
+
+      plt.imshow(leftImage)
+      plt.show()
 
       plt.imshow(depth_map)
       plt.show()
